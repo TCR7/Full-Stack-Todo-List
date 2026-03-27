@@ -48,4 +48,12 @@ export class TasksService {
 
        return task;
     }
+
+    delete(id: number): Task {
+        const task = this.findOne(id);
+
+        this.tasks = this.tasks.filter((task) => task.id !== id);
+
+        return task;
+    }
 }
