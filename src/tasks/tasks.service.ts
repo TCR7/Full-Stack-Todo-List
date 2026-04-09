@@ -7,8 +7,23 @@ import { UpdateTaskDto } from './dto/update-task.dto';
 export class TasksService {
     constructor(private readonly prisma: PrismaService) {}
 
-    findAll() {
-        return this.prisma.task.findMany();
+    findAll(completed?: string, search?: string) {
+        if(completed == undefined && search == undefined) {
+            return this.prisma.task.findMany();
+        }
+        const isCompleted = completed === 'true' // melhor leitura da comparação para aprendizado.
+        return this.prisma.task.findMany({
+            where: {
+                ...(completed !== undefined && {
+                    completed: isCompleted,
+                }),
+                ...(search !== undefined && {
+                    title: {
+                        contains: search,
+                    }
+                })
+            },
+        });
     }
 
     async findOne(id: number) {
