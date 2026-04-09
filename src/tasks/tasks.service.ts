@@ -20,8 +20,8 @@ export class TasksService {
                 ...(search !== undefined && {
                     title: {
                         contains: search,
-                    }
-                })
+                    },
+                }),
             },
         });
     }

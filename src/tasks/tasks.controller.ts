@@ -2,7 +2,7 @@ import { Body, Controller, Get, Param, Post, ParseIntPipe, Patch, Delete, Query 
 import { TasksService } from './tasks.service';
 import { CreateTaskDto } from './dto/create.task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
-import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('tasks')
 @Controller('tasks')
@@ -23,6 +23,7 @@ export class TasksController {
 
     @Get(':id')
     @ApiOperation({ summary: 'Busca uma tarefa por ID' })
+    @ApiParam({ name: 'id', type: Number, example: 1})
     @ApiResponse({ status: 200, description: 'Tarefa encontrada com sucesso' })
     @ApiResponse({ status: 404, description: 'Tarefa não encontrada' })
     findOne(@Param('id', ParseIntPipe) id: number) {
@@ -31,13 +32,14 @@ export class TasksController {
 
     @Post()
     @ApiOperation({ summary: 'Criar uma nova tarefa' })
-    @ApiResponse({ status: 200, description: 'Lista de tarefas retornada com sucesso' })
+    @ApiResponse({ status: 201, description: 'Lista de tarefas retornada com sucesso' })
     create(@Body() createTaskDto: CreateTaskDto) {
         return this.tasksService.create(createTaskDto)
     }
 
     @Patch(':id')
     @ApiOperation({ summary: 'Atualiza uma tarefa por ID' })
+    @ApiParam({ name: 'id', type: Number, example: 1})
     @ApiResponse({ status: 200, description: 'Tarefa atualizada com sucesso' })
     @ApiResponse({ status: 404, description: 'Tarefa não encontrada' })
     update(
@@ -48,6 +50,7 @@ export class TasksController {
     }
 
     @Delete(':id')
+    @ApiParam({ name: 'id', type: Number, example: 1})
     @ApiOperation({ summary: 'Deleta uma tarefa por ID' })
     @ApiResponse({ status: 200, description: 'Tarefa deletada com sucesso' })
     @ApiResponse({ status: 404, description: 'Tarefa não encontrada' })
