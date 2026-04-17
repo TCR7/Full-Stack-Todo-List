@@ -1,32 +1,49 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateTaskDto } from './dto/create.task.dto';
+import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
+import { FindAllTasksQueryDto } from './dto/find-all-tasks-query.dto';
 
 @Injectable()
 export class TasksService {
     constructor(private readonly prisma: PrismaService) {}
 
-    findAll(completed?: string, search?: string) {
-        if(completed == undefined && search == undefined) {
-            return this.prisma.task.findMany();
-        }
-        const isCompleted = completed === 'true' // melhor leitura da comparação para aprendizado.
-        return this.prisma.task.findMany({
-            where: {
-                ...(completed !== undefined && {
-                    completed: isCompleted,
-                }),
-                ...(search !== undefined && search.trim() !== '' && { 
-                    title: {
-                        contains: search,
-                    },
-                }),
-            },
+     async findAll(query: FindAllTasksQueryDto) {
+       const { completed, search, page = 1, limit = 10, orderBy = 'createdAt', order = 'desc'} = query;
+
+       const where = {
+        ...(completed !== undefined && 
+            { completed: completed === 'true'
+        }),
+        ...(search !== undefined &&
+            search.trim() !== '' && {
+                title: {
+                    contains: search,
+                },
+            }),
+       };
+
+       const skip = (page - 1) * limit;
+
+       const [data, total] = await Promise.all([
+        this.prisma.task.findMany({
+            where,
+            skip,
+            take: limit,
             orderBy: {
-                createdAt: 'desc',
+                [orderBy]: order,
             },
-        });
+        }),
+        this.prisma.task.count({ where })
+       ]);
+
+       return {
+        data,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+       };
     }
 
     async findOne(id: number) {
