@@ -17,11 +17,14 @@ export class TasksService {
                 ...(completed !== undefined && {
                     completed: isCompleted,
                 }),
-                ...(search !== undefined && {
+                ...(search !== undefined && search.trim() !== '' && { 
                     title: {
                         contains: search,
                     },
                 }),
+            },
+            orderBy: {
+                createdAt: 'desc',
             },
         });
     }
@@ -41,6 +44,8 @@ export class TasksService {
     create(createTaskDto: CreateTaskDto){
         return this.prisma.task.create({
             data: {
+                ...createTaskDto,
+                dueDate: createTaskDto.dueDate ? new Date(createTaskDto.dueDate) : null,
                 title: createTaskDto.title,
             },
         });
@@ -51,7 +56,12 @@ export class TasksService {
 
         return this.prisma.task.update({
             where: { id },
-            data: updateTaskDto,
+            data: {
+                ...updateTaskDto,
+                ...(updateTaskDto.dueDate !== undefined && {
+                    dueDate: updateTaskDto.dueDate ? new Date(updateTaskDto.dueDate) : null,
+                }),
+            },
         });
     }
 

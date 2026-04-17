@@ -1,7 +1,8 @@
-import { IsBoolean, IsOptional, IsString, IsNotEmpty } from "class-validator";
-import { ApiProperty } from "@nestjs/swagger";
+import { IsBoolean, IsOptional, IsString, IsNotEmpty, IsDateString } from "class-validator";
+import { ApiProperty, PartialType } from "@nestjs/swagger";
+import { CreateTaskDto } from "./create.task.dto";
 
-export class UpdateTaskDto {
+export class UpdateTaskDto extends PartialType(CreateTaskDto){
     @ApiProperty({
         example: 'Estudar Python',
         description: 'Atualizar título da tarefa',
@@ -11,6 +12,22 @@ export class UpdateTaskDto {
     @IsNotEmpty()
     @IsString()
     title?: string;
+
+    @ApiProperty({
+        example: 'Nova descrição da tarefa',
+        description: 'Descrição detalhada da tarefa',
+    })
+    @IsOptional()
+    @IsString()
+    description?: string;
+
+    @ApiProperty({
+        example: '2026-04-17T15:00:00.000Z',
+        description: 'Prazo da Tarefa',
+    })
+    @IsOptional()
+    @IsDateString()
+    dueDate?: string;
 
     @ApiProperty({
         example: false,

@@ -24,7 +24,6 @@ describe('TasksController (e2e)', () => {
     );
 
     await app.init();
-
     prisma = app.get(PrismaService);
   });
 
@@ -33,38 +32,57 @@ describe('TasksController (e2e)', () => {
   });
 
   afterAll(async () => {
+    await prisma.task.deleteMany();
     await app.close();
   });
+
   describe('/tasks (POST)', () => {
-      it('should create a task with success', async () => {
-        const response = await request(app.getHttpServer())
-          .post('/tasks')
-          .send({
-            title: 'Estudar testes e2e',
-            completed: false,
-          })
-      .expect(201);
+    it('should create a task with success', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/tasks')
+        .send({
+          title: 'Estudar testes e2e',
+          completed: false,
+        })
+        .expect(201);
 
       expect(response.body).toHaveProperty('id');
       expect(response.body.title).toBe('Estudar testes e2e');
       expect(response.body.completed).toBe(false);
       expect(response.body).toHaveProperty('createdAt');
       expect(response.body).toHaveProperty('updatedAt');
-  });
+    });
 
-  it('should create a task without completed field and using default value', async () => {
-    const response = await request(app.getHttpServer())
-      .post('/tasks')
-      .send({
-        title: 'Task sem completed',
-      })
-      .expect(201);
+    it('should create a task with description and dueDate', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/tasks')
+        .send({
+          title: 'Estudar Prisma',
+          description: 'Revisar migrations e client',
+          dueDate: '2026-04-25T18:00:00.000Z',
+          completed: false,
+        })
+        .expect(201);
+
+      expect(response.body.title).toBe('Estudar Prisma');
+      expect(response.body.description).toBe('Revisar migrations e client');
+      expect(response.body.dueDate).toBe('2026-04-25T18:00:00.000Z');
+      expect(response.body.completed).toBe(false);
+    });
+
+    it('should create a task without completed field and using default value', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/tasks')
+        .send({
+          title: 'Task sem completed',
+        })
+        .expect(201);
 
       expect(response.body.title).toBe('Task sem completed');
       expect(response.body.completed).toBe(false);
-  });
+    });
 
-   it('deve falhar ao criar task sem title', async () => {
+    it('deve falhar ao criar task sem title', async () => {
       await request(app.getHttpServer())
         .post('/tasks')
         .send({
@@ -73,13 +91,23 @@ describe('TasksController (e2e)', () => {
         .expect(400);
     });
 
-  it('deve falhar ao enviar campo extra', async () => {
+    it('deve falhar ao enviar campo extra', async () => {
       await request(app.getHttpServer())
         .post('/tasks')
         .send({
           title: 'Task inválida',
           completed: false,
           extraField: 'não permitido',
+        })
+        .expect(400);
+    });
+
+    it('deve falhar ao enviar dueDate inválido', async () => {
+      await request(app.getHttpServer())
+        .post('/tasks')
+        .send({
+          title: 'Task com data inválida',
+          dueDate: 'amanha de tarde',
         })
         .expect(400);
     });
@@ -100,6 +128,24 @@ describe('TasksController (e2e)', () => {
 
       expect(Array.isArray(response.body)).toBe(true);
       expect(response.body).toHaveLength(2);
+    });
+
+    it('deve retornar description e dueDate quando existirem', async () => {
+      await prisma.task.create({
+        data: {
+          title: 'Task completa',
+          description: 'Descrição da task',
+          dueDate: new Date('2026-04-25T18:00:00.000Z'),
+          completed: false,
+        },
+      });
+
+      const response = await request(app.getHttpServer())
+        .get('/tasks')
+        .expect(200);
+
+      expect(response.body[0].description).toBe('Descrição da task');
+      expect(response.body[0].dueDate).toBe('2026-04-25T18:00:00.000Z');
     });
 
     it('deve filtrar por completed=true', async () => {
@@ -176,6 +222,8 @@ describe('TasksController (e2e)', () => {
       const task = await prisma.task.create({
         data: {
           title: 'Buscar por id',
+          description: 'Detalhes da task',
+          dueDate: new Date('2026-04-25T18:00:00.000Z'),
           completed: false,
         },
       });
@@ -186,6 +234,8 @@ describe('TasksController (e2e)', () => {
 
       expect(response.body.id).toBe(task.id);
       expect(response.body.title).toBe('Buscar por id');
+      expect(response.body.description).toBe('Detalhes da task');
+      expect(response.body.dueDate).toBe('2026-04-25T18:00:00.000Z');
     });
 
     it('deve retornar 404 para id inexistente', async () => {
@@ -208,12 +258,16 @@ describe('TasksController (e2e)', () => {
         .patch(`/tasks/${task.id}`)
         .send({
           title: 'Task atualizada',
+          description: 'Nova descrição',
+          dueDate: '2026-04-30T20:00:00.000Z',
           completed: true,
         })
         .expect(200);
 
       expect(response.body.id).toBe(task.id);
       expect(response.body.title).toBe('Task atualizada');
+      expect(response.body.description).toBe('Nova descrição');
+      expect(response.body.dueDate).toBe('2026-04-30T20:00:00.000Z');
       expect(response.body.completed).toBe(true);
     });
 
@@ -238,6 +292,22 @@ describe('TasksController (e2e)', () => {
         .patch(`/tasks/${task.id}`)
         .send({
           extraField: 'não permitido',
+        })
+        .expect(400);
+    });
+
+    it('deve falhar ao enviar dueDate inválido no update', async () => {
+      const task = await prisma.task.create({
+        data: {
+          title: 'Task original',
+          completed: false,
+        },
+      });
+
+      await request(app.getHttpServer())
+        .patch(`/tasks/${task.id}`)
+        .send({
+          dueDate: 'data errada',
         })
         .expect(400);
     });

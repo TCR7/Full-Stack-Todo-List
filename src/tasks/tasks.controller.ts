@@ -9,11 +9,12 @@ import { ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/
 export class TasksController {
     constructor(private readonly tasksService: TasksService) {}
 
-    @Get()
     @ApiOperation({ summary: 'Lista todas as tarefas' })
-    @ApiQuery({ name: 'completed', required: false, description: 'Filtra as tarefas por status de conclusão' })
-    @ApiQuery({ name: 'search', required: false, description: 'Filtra as tarefas por título' })
+    @ApiQuery({ name: 'completed', required: false, description: 'Filtra as tarefas por status de conclusão', type: String })
+    @ApiQuery({ name: 'search', required: false, description: 'Filtra as tarefas por título', type: String })
     @ApiResponse({ status: 200, description: 'Lista de tarefas retornada com sucesso' })
+
+    @Get()
     findAll(
         @Query('completed') completed?: string,
         @Query('search') search?: string,
@@ -21,27 +22,31 @@ export class TasksController {
         return this.tasksService.findAll(completed, search);
     }
 
-    @Get(':id')
     @ApiOperation({ summary: 'Busca uma tarefa por ID' })
     @ApiParam({ name: 'id', type: Number, example: 1})
     @ApiResponse({ status: 200, description: 'Tarefa encontrada com sucesso' })
     @ApiResponse({ status: 404, description: 'Tarefa não encontrada' })
+
+    @Get(':id')
     findOne(@Param('id', ParseIntPipe) id: number) {
         return this.tasksService.findOne(id);
     }
 
-    @Post()
+
     @ApiOperation({ summary: 'Criar uma nova tarefa' })
     @ApiResponse({ status: 201, description: 'Lista de tarefas retornada com sucesso' })
+
+    @Post()
     create(@Body() createTaskDto: CreateTaskDto) {
         return this.tasksService.create(createTaskDto)
     }
 
-    @Patch(':id')
     @ApiOperation({ summary: 'Atualiza uma tarefa por ID' })
     @ApiParam({ name: 'id', type: Number, example: 1})
     @ApiResponse({ status: 200, description: 'Tarefa atualizada com sucesso' })
     @ApiResponse({ status: 404, description: 'Tarefa não encontrada' })
+
+    @Patch(':id')
     update(
         @Param('id', ParseIntPipe) id: number, 
         @Body() updateTaskDto: UpdateTaskDto
@@ -49,11 +54,12 @@ export class TasksController {
         return this.tasksService.update(id, updateTaskDto);
     }
 
-    @Delete(':id')
     @ApiParam({ name: 'id', type: Number, example: 1})
     @ApiOperation({ summary: 'Deleta uma tarefa por ID' })
     @ApiResponse({ status: 200, description: 'Tarefa deletada com sucesso' })
     @ApiResponse({ status: 404, description: 'Tarefa não encontrada' })
+
+    @Delete(':id')
     delete(@Param('id', ParseIntPipe) id:number){
         return this.tasksService.delete(id);
     }
